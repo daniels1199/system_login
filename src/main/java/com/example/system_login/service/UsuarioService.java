@@ -71,7 +71,7 @@ public class UsuarioService{
         Integer novasTetativas = usuario.getTentativas() + 1;
         usuario.setTentativas(novasTetativas);
 
-        if(novasTetativas >= 3){
+        if(novasTetativas >= 5){
             usuario.setLocked(true);
             usuario.setTimeLocked(LocalDateTime.now().plusMinutes(5));
             repository.save(usuario); 
