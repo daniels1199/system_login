@@ -1,9 +1,9 @@
 package com.example.system_login.controller;
 
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,6 +14,9 @@ import com.example.system_login.dto.LoginRequestDTO;
 import com.example.system_login.dto.SenhaRequestDTO;
 import com.example.system_login.service.UsuarioService;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -35,11 +38,25 @@ public class UsuarioController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody @Valid LoginRequestDTO dto){
+    public ResponseEntity<String> login(@RequestBody @Valid LoginRequestDTO dto, HttpServletResponse response, HttpServletRequest request){
     
         String token = service.autenticarUsuario(dto);
+
+        CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        if (csrfToken != null) {
+            csrfToken.getToken(); // Esta chamada força o Hibernate/Spring a criar o valor físico
+        }
         
-        return ResponseEntity.ok().header(HttpHeaders.AUTHORIZATION, "Bearer " + token).body("Login realizado com sucesso!");
+        Cookie cookie = new Cookie("AUTH_TOKEN", token);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); //Ativa segurança HTTPS, mas desativa o H2 Console
+        cookie.setPath("/");
+        cookie.setMaxAge(7200);
+
+        response.addCookie(cookie);
+        response.addHeader("Set Cookie", "AUTH_TOKEN=" + token + "; HttpOnly; Secure; Path=/; Max-Age=7200; SameSite=Strict");
+
+        return ResponseEntity.ok("Login efetuado com sucesso!");
             
 
     }
@@ -54,5 +71,31 @@ public class UsuarioController {
         }catch(RuntimeException e){
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletResponse response) {
+        
+        // Invalida o cookie do JWT colocando o Max-Age como 0
+        Cookie jwtCookie = new Cookie("AUTH_TOKEN", null);
+        jwtCookie.setHttpOnly(true);
+        jwtCookie.setSecure(true);
+        jwtCookie.setPath("/");
+        jwtCookie.setMaxAge(0); 
+        
+        // Invalida o cookie do CSRF colocando o Max-Age como 0
+        Cookie csrfCookie = new Cookie("XSRF-TOKEN", null);
+        csrfCookie.setHttpOnly(false);
+        csrfCookie.setPath("/");
+        csrfCookie.setMaxAge(0); 
+        
+        response.addCookie(jwtCookie);
+        response.addCookie(csrfCookie);
+        
+        // Reforça a destruição dos cookies nos navegadores via cabeçalho
+        response.addHeader("Set-Cookie", "AUTH_TOKEN=; Max-Age=0; Path=/; HttpOnly; Secure; SameSite=Strict");
+        response.addHeader("Set-Cookie", "XSRF-TOKEN=; Max-Age=0; Path=/; SameSite=Strict");
+
+        return ResponseEntity.ok("Logout efetuado com sucesso! Sessão encerrada.");
     }
 }
