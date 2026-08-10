@@ -39,8 +39,38 @@ public class Usuario implements UserDetails{
         return List.of(() -> "ROLE_USER");
     }
 
+    @Override
+    public String getPassword() {
+        return this.password;
+    }
+
+    @Override
+    public String getUsername() {
+        return this.username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !this.locked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
     public boolean isLocked() {
-        return locked;
+        return this.locked;
     }
 
     public void setLocked(boolean locked){
