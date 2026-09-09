@@ -55,7 +55,7 @@ public class UsuarioController {
         cookie.setMaxAge(7200);
 
         response.addCookie(cookie);
-        response.addHeader("Set Cookie", "AUTH_TOKEN=" + token + "; HttpOnly; Secure; Path=/; Max-Age=7200; SameSite=Strict");
+        response.addHeader("Set-Cookie", "AUTH_TOKEN=" + token + "; HttpOnly; Secure; Path=/; Max-Age=7200; SameSite=Strict");
 
         return ResponseEntity.ok("Login efetuado com sucesso!");
             
