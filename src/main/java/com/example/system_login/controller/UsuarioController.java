@@ -50,7 +50,7 @@ public class UsuarioController {
         
         Cookie cookie = new Cookie("AUTH_TOKEN", token);
         cookie.setHttpOnly(true);
-        cookie.setSecure(false); //Ativa segurança HTTPS, mas desativa o H2 Console
+        cookie.setSecure(true); //Ativa segurança HTTPS, mas desativa o H2 Console
         cookie.setPath("/");
         cookie.setMaxAge(7200);
 
